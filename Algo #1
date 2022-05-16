@@ -1,0 +1,53 @@
+class EmotionalFluorescentOrangeMonkey(QCAlgorithm):
+
+    def Initialize(self):
+        self.SetStartDate(2020, 1, 1)  # Set Start Date
+        
+        self.SetCash(100000)  # Set Strategy Cash
+        
+        #Adding all of our equities
+        self.spy = self.AddEquity("SPY", Resolution.Daily)
+        self.aapl = self.AddEquity("AAPL", Resolution.Daily)
+        self.vtwo = self.AddEquity("VTWO", Resolution.Daily)
+        
+        #Setting the data normalizatio mode for all our equities 
+        self.spy.SetDataNormalizationMode(DataNormalizationMode.Raw)
+        self.aapl.SetDataNormalizationMode(DataNormalizationMode.Raw)
+        self.vtwo.SetDataNormalizationMode(DataNormalizationMode.Raw)
+        
+    def OnData(self, data):
+        
+        #Checking to see whether our funds have been invested,if not then invest
+        if not self.Portfolio.Invested: 
+            self.SetHoldings("SPY", 0.5)
+            self.SetHoldings("AAPL", 0.35)
+            self.SetHoldings("VTWO", 0.15)
+        else: 
+            
+            #Extracting opening and closing prices for each equity 
+            #The trade bars stuff seemed to give errors so I changed it to this and it seems to work
+            spy_open = self.spy.Open
+            spy_close = self.spy.Close
+            
+            aapl_open = self.aapl.Open
+            aapl_close = self.aapl.Close
+            
+            vtwo_open = self.vtwo.Open
+            vtwo_close = self.vtwo.Close
+            
+            #Calculating the percentage change for each equity 
+            
+            spy_change = ((spy_close - spy_open)/spy_open) * 100  
+            aapl_change = ((aapl_close - aapl_open)/aapl_open) * 100 
+            vtwo_change = ((vtwo_close - vtwo_open)/vtwo_open) * 100 
+            
+            
+            #Ranking the percentages changes of the equities 
+            #I made this section shorter
+            unranked_changes = {"SPY":spy_change,"AAPL": aapl_change,"VTWO": vtwo_change}
+            ranked_changes = list(dict(sorted(unranked_changes.items(), key=lambda item: item[1], reverse=True)))
+            
+            #Assigning proportionate amount of funds to rankings 
+            self.SetHoldings(ranked_changes[0], 0.5)
+            self.SetHoldings(ranked_changes[1], 0.35)
+            self.SetHoldings(ranked_changes[2], 0.15)
